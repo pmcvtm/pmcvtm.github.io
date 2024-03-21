@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Using MS SQL Server in GitHub Actions |  Loud &amp; Abrasive: Patrick McVeety-Mill</title>
+<link rel="shortcut icon" type="image/x-icon" href="/assets/favicon.png" >
+
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Montserrat+Alternates&family=Montserrat:wght@300&family=Vibur&display=swap" rel="stylesheet"> 
+<script src="https://kit.fontawesome.com/69fa8fd1fe.js" crossorigin="anonymous"></script>
+
+<link rel="stylesheet" href="/assets/main.css">
+<link rel="stylesheet" href="/assets/syntax.css">
+
+<link rel="alternate" type="application/atom+xml" title="Loud &amp; Abrasive: Patrick McVeety-Mill" href="/feed.xml"/>
+<link rel="alternate" type="application/rss+xml"  title="Loud &amp; Abrasive: Patrick McVeety-Mill" href="/feed.xml"> 
+
+<script>
+  window.backOrHome = function() {
+    if(window.history.length <= 1){
+      window.location.replace('/')
+    } else{
+      history.back();
+    }
+  };
+</script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-49372703-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-49372703-1');
+</script>
+
+
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<meta name="generator" content="Jekyll v3.9.2" />
+<meta property="og:title" content="Using MS SQL Server in GitHub Actions" />
+<meta name="author" content="Patrick McVeety-Mill" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="One of my favorite features in Azure DevOps is the Service Container, which allows spinning up infrastructure dependencies for build process as Docker containers. They are also available in GitHub Actions, which comes as no surprise since Microsoft runs both those shows. GitHub provides some great tutorials for PostgreSQL and Redis Service Containers, but recently when needing to run Microsoft SQL Server we ran into some hiccups, so I thought I’d share what ended up working." />
+<meta property="og:description" content="One of my favorite features in Azure DevOps is the Service Container, which allows spinning up infrastructure dependencies for build process as Docker containers. They are also available in GitHub Actions, which comes as no surprise since Microsoft runs both those shows. GitHub provides some great tutorials for PostgreSQL and Redis Service Containers, but recently when needing to run Microsoft SQL Server we ran into some hiccups, so I thought I’d share what ended up working." />
+<link rel="canonical" href="http://loudandabrasive.com/mssql-on-github-actions" />
+<meta property="og:url" content="http://loudandabrasive.com/mssql-on-github-actions" />
+<meta property="og:site_name" content="Loud &amp; Abrasive: Patrick McVeety-Mill" />
+<meta property="og:image" content="http://loudandabrasive.com/assets/post-cards/2022-02-07-mssql-on-github-actions.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-02-07T15:56:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="http://loudandabrasive.com/assets/post-cards/2022-02-07-mssql-on-github-actions.jpg" />
+<meta property="twitter:title" content="Using MS SQL Server in GitHub Actions" />
+<meta name="twitter:site" content="@loudandabrasive" />
+<meta name="twitter:creator" content="@loudandabrasive" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Patrick McVeety-Mill"},"dateModified":"2022-02-07T15:56:00+00:00","datePublished":"2022-02-07T15:56:00+00:00","description":"One of my favorite features in Azure DevOps is the Service Container, which allows spinning up infrastructure dependencies for build process as Docker containers. They are also available in GitHub Actions, which comes as no surprise since Microsoft runs both those shows. GitHub provides some great tutorials for PostgreSQL and Redis Service Containers, but recently when needing to run Microsoft SQL Server we ran into some hiccups, so I thought I’d share what ended up working.","headline":"Using MS SQL Server in GitHub Actions","image":"http://loudandabrasive.com/assets/post-cards/2022-02-07-mssql-on-github-actions.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"http://loudandabrasive.com/mssql-on-github-actions"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"http://loudandabrasive.com/assets/loudandalogo.png"},"name":"Patrick McVeety-Mill"},"url":"http://loudandabrasive.com/mssql-on-github-actions"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+  <body>
+
+    <header class="top">
+  <div class="title-container">
+  <span class="subtitle">Patrick McVeety-Mill:</span>
+  <h1 class="title">
+    <a href="/">Loud &amp; Abrasive</a>
+  </h1>
+</div>
+
+<nav>
+  <input id="nav-toggle-check" name="nav-toggle-check" type="checkbox" class="nav-toggle" />
+  <label for="nav-toggle-check" class="nav-toggle">
+    <i class="fas fa-bars"></i>
+  </label>
+
+  <ul class="page-list">
+    
+      
+      
+        <li class="nav-link-vermilion">
+          <a href="/tech/index.html">
+            Tech <i class="fas fa-code-branch"></i>
+          </a>
+        </li>
+      
+    
+      
+      
+        <li class="nav-link-orange">
+          <a href="/life/index.html">
+            Life <i class="fas fa-hiking"></i>
+          </a>
+        </li>
+      
+    
+      
+      
+        <li class="nav-link-citron">
+          <a href="/arts/index.html">
+            Arts <i class="fas fa-paint-brush"></i>
+          </a>
+        </li>
+      
+    
+      
+      
+        <li class="nav-link-teal">
+          <a href="/about/">
+            About <i class="fas fa-bullhorn"></i>
+          </a>
+        </li>
+      
+    
+    <li class="nav-link-charcoal">
+      <a href="/feed.xml" target="_blank" class="hover-charcoal">Subscribe <i class="fas fa-rss"></i></a>
+    </li>
+  </ul>
+
+  <hr class="stripes mobile-stripes" />
+</nav>
+
+</header>
+<hr class="stripes top-stripes" />
+
+<main class="site-content" aria-label="Content">
+  <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Using MS SQL Server in GitHub Actions</h1>
+    <div class="post-meta">
+      <div>
+        <span class="post-category vermilion">DevOps</span>
+        published
+        <time datetime="2022-02-07T15:56:00+00:00" itemprop="datePublished">
+          
+          Feb 7, 2022
+        </time>
+      </div>
+      
+        regarding github-actions | mssql-server | docker | container-services
+      
+    </div>
+  </header>
+
+  <div class="post-content" aria-label="Content" itemprop="articleBody">
+    <p>One of my favorite features in Azure DevOps is the <a href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/service-containers">Service Container</a>, which allows spinning up infrastructure dependencies for build process as Docker containers. They are also available in <a href="https://docs.github.com/en/actions/using-containerized-services/about-service-containers">GitHub Actions</a>, which comes as no surprise since Microsoft runs both those shows. GitHub provides some great tutorials for <a href="https://docs.github.com/en/actions/using-containerized-services/creating-postgresql-service-containers">PostgreSQL</a> and <a href="https://docs.github.com/en/actions/using-containerized-services/creating-redis-service-containers">Redis</a> Service Containers, but recently when needing to run Microsoft SQL Server we ran into some hiccups, so I thought I’d share what ended up working.</p>
+
+<!--more-->
+<p>⚠ If you’re not familiar with GitHub actions or want more info about Service Containers, peep the linked documentation above, they do a much better job explaining than I might.</p>
+
+<p>We’ll dive right into using SQL Server. Let’s start with a dead-simple build that is using a PowerShell script to compile and run automated tests that use a Database.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">name</span><span class="pi">:</span> <span class="s">Test for PRs</span>
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">pull_request</span><span class="pi">:</span>
+  <span class="na">workflow_dispatch</span><span class="pi">:</span>
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">run-tests</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+  <span class="na">steps</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Compile and Test from Build Script</span>
+      <span class="na">shell</span><span class="pi">:</span> <span class="s">pwsh</span>
+      <span class="na">run</span><span class="pi">:</span> <span class="s">.\build.ps1 ci-pr $</span>
+</code></pre></div></div>
+
+<h2 id="adding-service-container">Adding Service Container</h2>
+
+<p>Believe it or not, MS SQL Server <strong>is</strong> available as a <a href="https://hub.docker.com/_/microsoft-mssql-server">Linux container on DockerHub</a>, which is pretty incredible in the grand scheme of history. There are versions for both 2017 and 2019, and while there is an option to set the license for production use, the option defaults to the free <code class="language-plaintext highlighter-rouge">Developer</code> edition, which is exactly what we need for use on our Continuous Integration agent.</p>
+
+<p>We can plug the image we want as Service Container in our workflow definition:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">name</span><span class="pi">:</span> <span class="s">Test for PRs</span>
+<span class="c1"># omitted, see above</span>
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">run-tests</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">services</span><span class="pi">:</span>
+      <span class="na">mssql</span><span class="pi">:</span>
+        <span class="na">image</span><span class="pi">:</span> <span class="s">mcr.microsoft.com/mssql/server:2019-latest</span>
+        <span class="na">env</span><span class="pi">:</span>
+          <span class="na">SA_PASSWORD</span><span class="pi">:</span> <span class="s">MyTestPassword</span>
+          <span class="na">ACCEPT_EULA</span><span class="pi">:</span> <span class="s1">'</span><span class="s">Y'</span>
+        <span class="na">ports</span><span class="pi">:</span>
+          <span class="pi">-</span> <span class="s">1433:1433</span>
+ <span class="na">steps</span><span class="pi">:</span>
+ <span class="c1"># omitted, see above</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">ACCEPT_EULA</code> and <code class="language-plaintext highlighter-rouge">SA_PASSWORD</code> environment variables are required to run, the latter of which is relevant to our app. Even though the password is just for test, it can’t hurt to save it as a <a href="https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-secrets">Secret</a> for the repository, in which case we would replace the value above with <code class="language-plaintext highlighter-rouge">$</code>.</p>
+
+<h2 id="configuring-tests-to-use-the-container">Configuring Tests to Use the Container</h2>
+
+<p>Now that our build is spinning up that database as a Service Container, we’ll need to make sure our tests know how to connect to it. If you’re working with MS SQL Server, it’s likely your connection string is authenticating “the easy way” with local-trusted Windows <code class="language-plaintext highlighter-rouge">Trusted_Connection=True</code>. That’s not going to fly on Linux, and we need will need to use a username/password connection string, with the container’s automatic <code class="language-plaintext highlighter-rouge">sa</code> and the password we used above.</p>
+
+<p>We’ll pass in the connection string for the Service Container as an environment variable to the step we run our tests on:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># omitted, see above</span>
+  <span class="na">steps</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Compile and Test from Build Script</span>
+      <span class="na">shell</span><span class="pi">:</span> <span class="s">pwsh</span>
+      <span class="na">run</span><span class="pi">:</span> <span class="s">.\build.ps1 ci-pr $</span>
+      <span class="na">env</span><span class="pi">:</span>
+        <span class="na">ConnectionStrings__MyConnString</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Server=localhost,1433;Initial</span><span class="nv"> </span><span class="s">Catalog=MyTestDb;User</span><span class="nv"> </span><span class="s">Id=sa;Password=MyTestPassword;"</span>
+</code></pre></div></div>
+
+<p>Again, it’s a good practice to save any password as a Secret, in which case you’d use <code class="language-plaintext highlighter-rouge">Password=$</code>.</p>
+
+<p>For the tests to use this new value, we need to include environment variables in our app’s configuration. Assuming you’re in .NET and using Hosting extensions and the default <code class="language-plaintext highlighter-rouge">Host.CreateDefaultBuilder()</code>, your config will <a href="https://docs.microsoft.com/en-us/dotnet/core/extensions/configuration#configure-console-apps">include them automatically</a>. Otherwise you’ll need to add the <a href="https://www.nuget.org/packages/Microsoft.Extensions.Configuration.EnvironmentVariables/"><code class="language-plaintext highlighter-rouge">Microsoft.Extensions.Configuration.EnvironmentVariables</code></a> NuGet package, and add it to your Configuration buildup:</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">configuration</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ConfigurationBuilder</span><span class="p">()</span>
+    <span class="c1">//other providers like appsettings.json</span>
+    <span class="p">.</span><span class="nf">AddEnvironmentVariables</span><span class="p">()</span>
+    <span class="p">.</span><span class="nf">Build</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>And that’s it! Our tests will use that environment variable for the Connection String, and connect to our Service Container database when they run. When the job is complete, GitHub Actions will tear down the container, so don’t use this for anything that requires persistent data between runs. Docker is a slick fit for infrastructure and dependencies during development (and in production), so it’s nice we can use them in our build environment as well!</p>
+
+  </div>
+
+  <a class="outline-link" href="javascript:window.backOrHome()">
+    <i class="fas fa-chevron-left vermilion"><i class="fas fa-chevron-left orange"></i></i><i class="fas fa-chevron-left citron"></i><i class="fas fa-chevron-left teal"></i>
+    Return
+  </a>
+
+  
+</article>
+
+</main>
+
+
+    <hr class="footer-stripes" />
+
+<footer class="site-footer">
+  <span class="copy">&copy; 2024 Loud & Abrasive & Co.</span>
+  <ul class="social-links">
+    
+      
+      
+      <li><a href="https://twitter.com/loudandabrasive" title="Twitter" target="_blank"><i class="fab fa-twitter hover-vermilion"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://linkedin.com/in/pmcvtm" title="LinkedIn" target="_blank"><i class="fab fa-linkedin-in hover-orange"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://github.com/pmcvtm" title="Github" target="_blank"><i class="fab fa-github hover-citron"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://bandcamp.com/loudandabrasive" title="Bandcamp" target="_blank"><i class="fab fa-bandcamp hover-teal"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://letterboxd.com/loudandabrasive/" title="Letterboxd" target="_blank"><i class="fab fa-pied-piper hover-charcoal"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://untappd.com/user/loudandabrasive" title="Untappd" target="_blank"><i class="fab fa-untappd hover-vermilion"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://goodreads.com/loudandabrasive/" title="Goodreads" target="_blank"><i class="fab fa-goodreads-g hover-orange"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://instagram.com/loudandabrasive" title="Instagram" target="_blank"><i class="fab fa-instagram hover-citron"></i></a></li>
+      
+    
+    <li><a class="rss" title="Subscribe" target="_blank" href="/feed.xml"><i class="fas fa-rss"></i></a></li>
+  </ul>
+</footer>
+
+
+  </body>
+</html>

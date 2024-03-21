@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Securing Cloud Infrastructure with Azure Managed Identities |  Loud &amp; Abrasive: Patrick McVeety-Mill</title>
+<link rel="shortcut icon" type="image/x-icon" href="/assets/favicon.png" >
+
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Montserrat+Alternates&family=Montserrat:wght@300&family=Vibur&display=swap" rel="stylesheet"> 
+<script src="https://kit.fontawesome.com/69fa8fd1fe.js" crossorigin="anonymous"></script>
+
+<link rel="stylesheet" href="/assets/main.css">
+<link rel="stylesheet" href="/assets/syntax.css">
+
+<link rel="alternate" type="application/atom+xml" title="Loud &amp; Abrasive: Patrick McVeety-Mill" href="/feed.xml"/>
+<link rel="alternate" type="application/rss+xml"  title="Loud &amp; Abrasive: Patrick McVeety-Mill" href="/feed.xml"> 
+
+<script>
+  window.backOrHome = function() {
+    if(window.history.length <= 1){
+      window.location.replace('/')
+    } else{
+      history.back();
+    }
+  };
+</script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-49372703-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-49372703-1');
+</script>
+
+
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<meta name="generator" content="Jekyll v3.9.2" />
+<meta property="og:title" content="Securing Cloud Infrastructure with Azure Managed Identities" />
+<meta name="author" content="Patrick McVeety-Mill" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Of the Azure features I’ve become more acquainted with these past couple years, Managed Identities are one of my favorites. Managed Identities are system-managed service principals that allow for a level of security control I hadn’t considered before, where keys and passwords can be ‘eliminated’ or rotated so frequently that no human has (at-ready) access to resources, without requiring (even automated) code or configuration changes for applications. They are a breeze to set up in .NET Core, and “you can too” using this guide. This article once appeared on headspring.com." />
+<meta property="og:description" content="Of the Azure features I’ve become more acquainted with these past couple years, Managed Identities are one of my favorites. Managed Identities are system-managed service principals that allow for a level of security control I hadn’t considered before, where keys and passwords can be ‘eliminated’ or rotated so frequently that no human has (at-ready) access to resources, without requiring (even automated) code or configuration changes for applications. They are a breeze to set up in .NET Core, and “you can too” using this guide. This article once appeared on headspring.com." />
+<link rel="canonical" href="http://loudandabrasive.com/securing-cloud-infrastructure-with-azure-managed-identities" />
+<meta property="og:url" content="http://loudandabrasive.com/securing-cloud-infrastructure-with-azure-managed-identities" />
+<meta property="og:site_name" content="Loud &amp; Abrasive: Patrick McVeety-Mill" />
+<meta property="og:image" content="http://loudandabrasive.com/assets/post-cards/2020-09-22-securing-cloud-infrastructure-with-azure-managed-identities.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-09-22T15:48:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="http://loudandabrasive.com/assets/post-cards/2020-09-22-securing-cloud-infrastructure-with-azure-managed-identities.jpg" />
+<meta property="twitter:title" content="Securing Cloud Infrastructure with Azure Managed Identities" />
+<meta name="twitter:site" content="@loudandabrasive" />
+<meta name="twitter:creator" content="@loudandabrasive" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Patrick McVeety-Mill"},"dateModified":"2020-09-22T15:48:00+00:00","datePublished":"2020-09-22T15:48:00+00:00","description":"Of the Azure features I’ve become more acquainted with these past couple years, Managed Identities are one of my favorites. Managed Identities are system-managed service principals that allow for a level of security control I hadn’t considered before, where keys and passwords can be ‘eliminated’ or rotated so frequently that no human has (at-ready) access to resources, without requiring (even automated) code or configuration changes for applications. They are a breeze to set up in .NET Core, and “you can too” using this guide. This article once appeared on headspring.com.","headline":"Securing Cloud Infrastructure with Azure Managed Identities","image":"http://loudandabrasive.com/assets/post-cards/2020-09-22-securing-cloud-infrastructure-with-azure-managed-identities.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"http://loudandabrasive.com/securing-cloud-infrastructure-with-azure-managed-identities"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"http://loudandabrasive.com/assets/loudandalogo.png"},"name":"Patrick McVeety-Mill"},"url":"http://loudandabrasive.com/securing-cloud-infrastructure-with-azure-managed-identities"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+  <body>
+
+    <header class="top">
+  <div class="title-container">
+  <span class="subtitle">Patrick McVeety-Mill:</span>
+  <h1 class="title">
+    <a href="/">Loud &amp; Abrasive</a>
+  </h1>
+</div>
+
+<nav>
+  <input id="nav-toggle-check" name="nav-toggle-check" type="checkbox" class="nav-toggle" />
+  <label for="nav-toggle-check" class="nav-toggle">
+    <i class="fas fa-bars"></i>
+  </label>
+
+  <ul class="page-list">
+    
+      
+      
+        <li class="nav-link-vermilion">
+          <a href="/tech/index.html">
+            Tech <i class="fas fa-code-branch"></i>
+          </a>
+        </li>
+      
+    
+      
+      
+        <li class="nav-link-orange">
+          <a href="/life/index.html">
+            Life <i class="fas fa-hiking"></i>
+          </a>
+        </li>
+      
+    
+      
+      
+        <li class="nav-link-citron">
+          <a href="/arts/index.html">
+            Arts <i class="fas fa-paint-brush"></i>
+          </a>
+        </li>
+      
+    
+      
+      
+        <li class="nav-link-teal">
+          <a href="/about/">
+            About <i class="fas fa-bullhorn"></i>
+          </a>
+        </li>
+      
+    
+    <li class="nav-link-charcoal">
+      <a href="/feed.xml" target="_blank" class="hover-charcoal">Subscribe <i class="fas fa-rss"></i></a>
+    </li>
+  </ul>
+
+  <hr class="stripes mobile-stripes" />
+</nav>
+
+</header>
+<hr class="stripes top-stripes" />
+
+<main class="site-content" aria-label="Content">
+  <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Securing Cloud Infrastructure with Azure Managed Identities</h1>
+    <div class="post-meta">
+      <div>
+        <span class="post-category vermilion">Cloud</span>
+        published
+        <time datetime="2020-09-22T15:48:00+00:00" itemprop="datePublished">
+          
+          Sep 22, 2020
+        </time>
+      </div>
+      
+        regarding azure | security | devops
+      
+    </div>
+  </header>
+
+  <div class="post-content" aria-label="Content" itemprop="articleBody">
+    <p>Of the Azure features I’ve become more acquainted with these past couple years, <strong>Managed Identities</strong> are one of my favorites. Managed Identities are system-managed service principals that allow for a level of security control I hadn’t considered before, where keys and passwords can be ‘eliminated’ or rotated so frequently that <strong>no human</strong> has (at-ready) access to resources, without requiring (even automated) code or configuration changes for applications. They are a breeze to set up in .NET Core, and “you can too” using this guide.</p>
+
+<p><em>This article once appeared on <a href="https://web.archive.org/web/20210617055836/https://headspring.com/2020/09/22/better-than-passwords-securing-cloud-infrastructure-with-azure-managed-identities/">headspring.com</a>.</em></p>
+
+<!--more-->
+
+<p>Security is a critical concern for any application, but especially so for cloud-native ones. Besides network security and access control, keeping keys and passwords secret and regularly rotated is fundamental. But even automated rotations can be time-consuming, and the presence of any key comes with risk of exposure or human error.</p>
+
+<p>For applications hosted in Azure, however, there is a better way in <a href="https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview">Azure Managed Identities</a>. With a few configuration tweaks and even fewer lines of code, we can replace our application’s password-oriented infrastructure authentication with a trusted, system-managed service principal. This guarantees a secure connection with no need for knowing, keeping, or rotating secret keys.</p>
+
+<h2 id="mise-en-place">Mise en place</h2>
+
+<p>Our application is a cloud-native .NET Core 3.1 web app with a few external dependencies: an Azure SQL database, files in Azure Blob Storage, and configuration secrets saved to Azure KeyVaut. A facsimile of our app is <a href="https://github.com/pmcvtm/azureference-app/tree/blog-1-start">available on Github</a> for reference. It uses the following Nuget packages to interface with those dependencies, using traditional username / password or secret-key-based authentication:</p>
+
+<ul>
+  <li>EntityFrameworkCore.SqlServer</li>
+  <li>Storage.Blobs</li>
+  <li>Security.KeyVault.Secrets</li>
+</ul>
+
+<p>There are many other Azure services that allow authentication and authorization through Managed Identity; the steps for granting access and updating the code all follow a similar pattern. Likewise, most application-hosting services in Azure support creating a Managed Identity, including <a href="https://docs.microsoft.com/en-us/azure/app-service/overview-managed-identity?tabs=dotnet">App Services</a>, Virtual Machines (<a href="https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/tutorial-windows-vm-access-arm">Windows</a> and <a href="https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/tutorial-linux-vm-access-arm">Linux</a>), <a href="https://docs.microsoft.com/en-us/azure/logic-apps/create-managed-service-identity">Logic Apps</a> and even for containerized apps on <a href="https://docs.microsoft.com/en-us/azure/container-instances/container-instances-managed-identity">Container Instances</a> or <a href="https://docs.microsoft.com/en-us/azure/aks/use-managed-identity">Azure Kubernetes Services</a>. For this guide, we’ll be using App Services, Azure’s elastic application host.</p>
+
+<p><em>NOTE: While the following steps can all be executed with just a few clicks in the Azure Portal’s web interface, our examples are <a href="https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest">Azure CLI</a> commands for the sake of brevity, precision, and repeatability. Be sure to <a href="https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli?view=azure-cli-latest">sign in</a> and set the desired <a href="https://docs.microsoft.com/en-us/cli/azure/manage-azure-subscriptions-azure-cli?view=azure-cli-latest">subscription to active</a> before continuing.</em></p>
+
+<h2 id="enabling-managed-identity">Enabling Managed Identity</h2>
+
+<p>We have the option to use an existing AD service principal, but we’ll prefer the System Managed Identity, wherein Azure will generate and manage a principal for us. This provides an extra layer of protection, as <strong>no</strong> users can alter the definition of the identity. We assign the system identity using the name of our App Service and the Resource Group it’s in:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go">az webapp identity assign --name MyAppService --resource-group  MyResourceGroup
+</span></code></pre></div></div>
+
+<p>Assigning the identity to our service will reveal a unique identifier for the new service principal; called <code class="language-plaintext highlighter-rouge">principalId</code> in the CLI result (or “Object Id” in the Portal). Make note of this ID, as we’ll need it in the next steps.</p>
+
+<h2 id="granting-access-for-the-service-principal">Granting access for the Service Principal</h2>
+
+<p>After enabling Managed Identity, we can grant the new principal access to our dependencies.</p>
+
+<p>For Azure SQL, we have to create a user that maps to the new service principal and assign it the necessary database roles. This must be done using an existing authentication method, either an existing user in Active Directory with a password, or the server’s default SQL administrator account. We’ll open a connection and run the following commands, naming the new user to match the App Service name:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">USER</span> <span class="p">[</span><span class="n">MyAppService</span><span class="p">]</span> <span class="k">FROM</span> <span class="k">EXTERNAL</span> <span class="n">PROVIDER</span>
+
+<span class="k">ALTER</span> <span class="k">ROLE</span> <span class="n">db_datareader</span> <span class="k">ADD</span> <span class="n">MEMBER</span> <span class="p">[</span><span class="n">MyAppService</span><span class="p">]</span>
+<span class="k">ALTER</span> <span class="k">ROLE</span> <span class="n">db_datawriter</span> <span class="k">ADD</span> <span class="n">MEMBER</span> <span class="p">[</span><span class="n">MyAppService</span><span class="p">]</span>
+<span class="c1">-- alter other roles as needed</span>
+</code></pre></div></div>
+
+<p>​We can also create a user for an Azure AD Security Group, which is helpful when we want multiple users or principals to have similar roles for interacting with the database. If you have configured your database this way already, simply add the App Service’s principal to the existing security group.</p>
+
+<p><em>NOTE: You may have seen the option to authorize our Managed Identity using the <a href="https://docs.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-overview">Azure Active Directory Admin</a> feature, which grants an AD principal administrator privileges for the entire server. While a simple solution, that gives our application too much control over the server in the event of some malicious action through our application. Our code is secure, but it’s irresponsible to grant more than the minimum roles required by the application’s functionality.</em></p>
+
+<p>Azure Storage Accounts provide a specific Access Control role for making read / write changes to Blobs in a container or account. We can grant this role to our new Service Principal using the <code class="language-plaintext highlighter-rouge">PrincipalId</code> we gathered in the first step and the full “Resource ID” of the storage account:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go"> az role assignment create --role "Storage Blob Data Contributor" --assignee MyPrincipalId --scope /subscriptions/my-subscription-id/resourcegroups/my-resource-group/providers/Microsoft.Storage/storageAccounts/my-storage-account==
+</span></code></pre></div></div>
+
+<p>Finally, Azure Key Vault authenticates and authorizes using individual Access Policies for Active Directory principals. Policies can be created for human users, security groups, or service principals, including our Managed Identity. Each policy has individual controls for secrets, keys, and certificates separately. We’ll add a policy for our application to list and read any stored secrets, using that same <code class="language-plaintext highlighter-rouge">PrincipalId and</code> the name of the Key Vault:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go">az keyvault set-policy --name MyKeyVault --object-id MyPrincipalId --secret-permissions get list
+</span></code></pre></div></div>
+
+<p>With all our resources configured to grant access to our new principal, we’re ready to configure our code to use Managed Identity to authenticate, rather than traditional keys or passwords.</p>
+
+<h2 id="updating-application-code">Updating application code</h2>
+
+<p>The SDK for authenticating with Managed Identity is found in the <code class="language-plaintext highlighter-rouge">Azure.Identity</code> library, and is compatible with our <code class="language-plaintext highlighter-rouge">Azure.*</code> SDKs for KeyVault and Azure Storage. Apps using the older (deprecated) <code class="language-plaintext highlighter-rouge">Microsoft.Azure.*</code> libraries can still use Managed Identity, with the <code class="language-plaintext highlighter-rouge">Microsoft.Azure.Services.AppAuthentication</code> Nuget Package, although the implementation varies slightly. Also, keep in mind the resource URLs used here may vary for Azure Government or other cloud environments.</p>
+
+<p>Starting with SQL server, we need to change our connection string to remove the username and password, as they will be replaced with the trusted identity token. We want to keep the rest of the connection string info, in particular the server address and initial database. Chances are, this is a change in your App Service settings or, better yet, your deployment process. The updated connection string may look something like this:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Server=tcp:mysqlserver.database.windows.net,1433;Initial Catalog=MyDB;Persist Security Info=False MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+</code></pre></div></div>
+
+<p>Now, we can update our Entity Framework Database Context to fetch an authorization token for our Managed Identity principal, when configured to do so:</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">MyDatabase</span> <span class="p">:</span> <span class="n">DbContext</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="nf">MyDatabase</span><span class="p">(</span><span class="n">DbContextOptions</span><span class="p">&lt;</span><span class="n">MyDatabase</span><span class="p">&gt;</span> <span class="n">options</span><span class="p">,</span> <span class="n">IConfiguration</span> <span class="n">config</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">GetValue</span><span class="p">&lt;</span><span class="kt">bool</span><span class="p">&gt;(</span><span class="s">"UseManagedIdentity"</span><span class="p">))</span>
+      <span class="nf">AddTokenToConnection</span><span class="p">().</span><span class="nf">Wait</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">AddTokenToConnection</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="kt">var</span> <span class="n">managedIdentityCred</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DefaultAzureCredential</span><span class="p">();</span>
+    <span class="kt">var</span> <span class="n">tokenRequestContext</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">TokenRequestContext</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="s">"https://database.windows.net//.default"</span> <span class="p">});</span>
+    <span class="kt">var</span> <span class="n">tokenRequestResult</span> <span class="p">=</span> <span class="k">await</span> <span class="n">managedIdentityCred</span><span class="p">.</span><span class="nf">GetTokenAsync</span><span class="p">(</span><span class="n">tokenRequestContext</span><span class="p">);</span>
+
+    <span class="kt">var</span> <span class="n">connection</span> <span class="p">=</span> <span class="p">(</span><span class="n">Microsoft</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">SqlClient</span><span class="p">.</span><span class="n">SqlConnection</span><span class="p">)</span><span class="n">Database</span><span class="p">.</span><span class="nf">GetDbConnection</span><span class="p">();</span>
+    <span class="n">connection</span><span class="p">.</span><span class="n">AccessToken</span> <span class="p">=</span> <span class="n">tokenRequestResult</span><span class="p">.</span><span class="n">Token</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The key here  is the <code class="language-plaintext highlighter-rouge">DefaultAzureCredential</code>, which will seek out <a href="https://docs.microsoft.com/en-us/dotnet/api/azure.identity.defaultazurecredential?view=azure-dotnet">enabled authentication schemes</a> and request a token for the given <code class="language-plaintext highlighter-rouge">TokenRequestContext</code>, which, here, is the Azure Database scheme. We can then include the token’s value on our SQL Server Connection. An error is thrown if the token is added to a connection string that also includes username and password, so we use an explicit configuration flag <code class="language-plaintext highlighter-rouge">UseManagedIdentity</code> that will be set in the deployed environment. Instead, you might get clever about the structure of your connection string to conditionally include the token.</p>
+
+<p>Azure Storage also leverages the <code class="language-plaintext highlighter-rouge">DefaultAzureCredential</code>, and since the library is more catered to Azure than Entity Framework, there is a specific overload when creating a new <code class="language-plaintext highlighter-rouge">BlobContainerClient</code>. Simply replace the connection string or configured key with the default token, in conjunction with the resource URL for the Storage Account:</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">storageAccountUri</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">_config</span><span class="p">.</span><span class="n">GetValue</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;(</span><span class="s">"File:StorageAccountUrl"</span><span class="p">));</span>
+
+<span class="kt">var</span> <span class="n">managedIdentityCred</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DefaultAzureCredential</span><span class="p">();</span>
+<span class="kt">var</span> <span class="n">blobContainerClient</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BlobContainerClient</span><span class="p">(</span><span class="n">myStorageAccoutnUri</span><span class="p">,</span> <span class="n">managedIdentityCred</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Unlike with SQL Server, we do not need to request a token directly with <code class="language-plaintext highlighter-rouge">GetTokenAsync()</code>, or set the <code class="language-plaintext highlighter-rouge">TokenRequestContext</code>. Both of these will happen under the hood, as part of the Azure Storage library. Like SQL Server, however, this token is not compatible with local or emulated storage, so depending on the nature of the application’s configuration, additional changes may be necessary to support both schemes.</p>
+
+<p>The implementation for connecting to Azure Key Vault is almost identical to Blob Storage:</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">keyVaultUri</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">_config</span><span class="p">.</span><span class="n">GetValue</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;(</span><span class="s">"KeyVaultUrl"</span><span class="p">));</span>
+<span class="kt">var</span> <span class="n">keyVaultClient</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SecretClient</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">kvUri</span><span class="p">),</span> <span class="k">new</span> <span class="nf">DefaultAzureCredential</span><span class="p">());</span>
+</code></pre></div></div>
+
+<p>In the <code class="language-plaintext highlighter-rouge">Azure.Security.KeyVault.Secrets</code> library, the <strong>only</strong> overload for a new <code class="language-plaintext highlighter-rouge">SecretClient</code> is with some <code class="language-plaintext highlighter-rouge">TokenCredential</code>. So if you currently depend on Key Vault, be prepared to wrap your current authentication scheme with a custom implementation, or make a move towards Managed Identity or another existing secure option. The implementation of all the above changes can be seen on <a href="https://github.com/pmcvtm/azureference-app/pull/2">this pull request</a> in our facsimile repository.</p>
+
+<h2 id="what-about-testing">What about testing?</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">DefaultAzureToken</code> is the code mechanism to provide the appropriate <code class="language-plaintext highlighter-rouge">Azure.TokenCredential</code> given the current runtime context. When an application is hosted by a service with Managed Identity enabled, it resolves to a <code class="language-plaintext highlighter-rouge">ManagedIdentityCredential</code>, but is compatible with other “environmental” contexts, including configured values or shared tokens. During local development, the token resolves as a <code class="language-plaintext highlighter-rouge">VisualStudioCredential</code> or <code class="language-plaintext highlighter-rouge">VisualStudioCodeCredential</code>, using your signed-in user info to authenticate. This also provides a safe way to connect to shared cloud resources for development without sharing any keys or passwords that might accidentally be committed to the repository. This enables integration testing without any extra hurdles, however it’s probably still a good idea to wrap these tools in abstractions for mocking, stubbing, or faking in your unit tests.</p>
+
+<h2 id="securing-your-future">Securing your future</h2>
+
+<p>Cloud infrastructure and the code that interfaces with it is always on the move, and <a href="https://github.com/Azure/azure-sdk-for-net/blob/64463f361c3dfeb8f96bb1d335710b383424bdb6/sdk/core/Microsoft.Extensions.Azure/README.md">new options for development</a> with Azure will surely arise. Regardless of what namespaces your code is under, consider securing your applications using trusted service principles, rather than storing hard-written keys, to reduce risk, reduce effort, and elevate security.</p>
+
+<p><em>This article once appeared on <a href="https://web.archive.org/web/20210617055836/https://headspring.com/2020/09/22/better-than-passwords-securing-cloud-infrastructure-with-azure-managed-identities/">headspring.com</a>.</em></p>
+
+  </div>
+
+  <a class="outline-link" href="javascript:window.backOrHome()">
+    <i class="fas fa-chevron-left vermilion"><i class="fas fa-chevron-left orange"></i></i><i class="fas fa-chevron-left citron"></i><i class="fas fa-chevron-left teal"></i>
+    Return
+  </a>
+
+  
+</article>
+
+</main>
+
+
+    <hr class="footer-stripes" />
+
+<footer class="site-footer">
+  <span class="copy">&copy; 2024 Loud & Abrasive & Co.</span>
+  <ul class="social-links">
+    
+      
+      
+      <li><a href="https://twitter.com/loudandabrasive" title="Twitter" target="_blank"><i class="fab fa-twitter hover-vermilion"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://linkedin.com/in/pmcvtm" title="LinkedIn" target="_blank"><i class="fab fa-linkedin-in hover-orange"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://github.com/pmcvtm" title="Github" target="_blank"><i class="fab fa-github hover-citron"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://bandcamp.com/loudandabrasive" title="Bandcamp" target="_blank"><i class="fab fa-bandcamp hover-teal"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://letterboxd.com/loudandabrasive/" title="Letterboxd" target="_blank"><i class="fab fa-pied-piper hover-charcoal"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://untappd.com/user/loudandabrasive" title="Untappd" target="_blank"><i class="fab fa-untappd hover-vermilion"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://goodreads.com/loudandabrasive/" title="Goodreads" target="_blank"><i class="fab fa-goodreads-g hover-orange"></i></a></li>
+      
+    
+      
+      
+      <li><a href="https://instagram.com/loudandabrasive" title="Instagram" target="_blank"><i class="fab fa-instagram hover-citron"></i></a></li>
+      
+    
+    <li><a class="rss" title="Subscribe" target="_blank" href="/feed.xml"><i class="fas fa-rss"></i></a></li>
+  </ul>
+</footer>
+
+
+  </body>
+</html>
